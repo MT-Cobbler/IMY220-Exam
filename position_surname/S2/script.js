@@ -1,4 +1,4 @@
-// 24 Schoeman
+// 24_Schoeman
 
 // Your code goes here
 $(() => {
@@ -7,7 +7,7 @@ $(() => {
 
     const getUserDetails = (url, arr = []) => {
         return new Promise((res, rej) => {
-            $.getJSON(url).done(data => {
+            $.getJSON(url).then(data => {
                 if (arr.length < 1) {
                     res(data)
                 } else {
@@ -31,7 +31,7 @@ $(() => {
         return new Promise((res, rej) => {
             var returnFriendList = [];
             let id = userID;
-            $.getJSON(url).done(data => {
+            $.getJSON(url).then(data => {
                 let actualFriendArrayID = [];
                 returnFriendList = data.filter(element => {
                     if (element.user === id) {
@@ -47,13 +47,13 @@ $(() => {
     const createUserRow = (user) => {
         const { name, surname } = user;
         let row = $("<tr></tr>", {
-                class: "border"
+                class: "border-top"
             })
             .append($("<td></td>", { html: `${name}` }))
             .append($("<td></td>", { html: `${surname}` }))
         return row;
     }
-
+    var uniPromise;
     let dropDown_Users = getUserDetails(url_Users);
     dropDown_Users.then(users => {
         users.map(user => {
@@ -62,33 +62,35 @@ $(() => {
             $(".dropdown-menu").append($(element));
         });
         return users;
-    }).then(users => {
+    }).then(() => {
         $("div.dropdown-menu tr").on("click", function() {
             $("tbody").empty();
+
             let id = $(this).data("id");
-            let getList = getFriendList(url_Friends, id);
-            getList.then(data => {
-                return data;
-            }).then(getDetails => {
-                if (getDetails.length > 0) {
-                    let userDetails = getUserDetails(url_Users, getDetails);
-                    userDetails.then(user => {
-                        user.map(index => {
-                            if (index.userid != id) {
-                                let newRow = createUserRow(index);
-                                $("tbody").append($(newRow));
-                            }
-                        })
+            getFriendList(url_Friends, id)
+                .then((getList) => {
+                    return getList;
+                })
+                .then((getList) => {
+                    if (getList.length > 0) {
+                        return getUserDetails(url_Users, getList);
+                    } else {
+                        let row = $("<tr></tr>", {
+                                class: "border"
+                            })
+                            .append($("<td></td>", { html: `No friends` }))
+                            .append($("<td></td>", ));
+                        $("tbody").append($(row));
+                    }
+                })
+                .then((user) => {
+                    let something = user.map(index => {
+                        if (index.userid != id) {
+                            let newRow = createUserRow(index);
+                            $("tbody").append($(newRow));
+                        }
                     })
-                } else {
-                    let row = $("<tr></tr>", {
-                            class: "border"
-                        })
-                        .append($("<td></td>", { html: `No friends` }))
-                        .append($("<td></td>", ));
-                    $("tbody").append($(row));
-                }
-            })
-        });
+                })
+        })
     })
 });
